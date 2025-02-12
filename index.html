@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Compressor</title>
     <style>
-        /* Google Font */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
         * {
@@ -15,7 +14,6 @@
             font-family: 'Poppins', sans-serif;
         }
 
-        /* Full Page Background */
         body {
             display: flex;
             align-items: center;
@@ -26,7 +24,6 @@
             padding: 20px;
         }
 
-        /* Main Container */
         .container {
             background: #333;
             padding: 25px;
@@ -40,7 +37,6 @@
 
         h1 {
             font-size: 22px;
-            color: white;
             margin-bottom: 15px;
         }
 
@@ -71,7 +67,6 @@
             cursor: pointer;
         }
 
-        /* Green Button */
         button {
             background: #27ae60;
             color: white;
@@ -89,64 +84,18 @@
             cursor: not-allowed;
         }
 
-        #quality-value {
+        #file-size {
+            font-size: 13px;
+            margin-top: 5px;
+            color: yellow;
+        }
+
+        #status {
+            margin-top: 10px;
             font-weight: bold;
-            color: white;
+            color: yellow;
         }
 
-        /* Slider UI */
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            position: relative;
-        }
-
-        .slider-wrapper {
-            position: relative;
-            width: 100%;
-            height: 6px;
-            background: #444;
-            border-radius: 5px;
-        }
-
-        .slider-fill {
-            position: absolute;
-            height: 6px;
-            background: #27ae60;
-            border-radius: 5px;
-            width: 50%;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            background: transparent;
-            outline: none;
-            cursor: pointer;
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-        }
-
-        /* Movable Green Dot */
-        .slider-thumb {
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background: #27ae60;
-            border-radius: 50%;
-            top: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            transition: left 0.1s;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-        }
-
-        /* Preview Section */
         #preview {
             margin-top: 15px;
         }
@@ -158,21 +107,11 @@
             margin-top: 10px;
         }
 
-        #status {
-            margin-top: 10px;
-            font-weight: bold;
-            color: yellow;
-        }
-
-        /* Responsive Design */
         @media (max-width: 768px) {
             .container {
                 width: 95%;
                 max-width: 400px;
                 padding: 20px;
-            }
-            h1 {
-                font-size: 20px;
             }
         }
 
@@ -185,10 +124,6 @@
             h1 {
                 font-size: 18px;
             }
-            button {
-                padding: 10px;
-                font-size: 13px;
-            }
         }
     </style>
 </head>
@@ -197,19 +132,13 @@
     <div class="container">
         <h1>Image Compressor</h1>
 
-        <label for="upload">Upload Image:</label>
+        <label for="upload">Choose File 🗃️:</label>
         <input type="file" id="upload" accept="image/*">
+        <div id="file-size"></div>
         
-        <label for="quality">Quality (0-100):</label>
-        <div class="slider-container">
-            <div class="slider-wrapper">
-                <div class="slider-fill"></div>
-                <div class="slider-thumb"></div>
-                <input type="range" id="quality" min="0" max="100" value="50">
-            </div>
-            <span id="quality-value">50%</span>
-        </div>
-
+        <label for="quality">Quality (0KB - 50MB):</label>
+        <input type="number" id="quality" min="0" max="50000" value="5000"> KB
+        
         <label for="format">Output Format:</label>
         <select id="format">
             <option value="jpeg">JPEG</option>
@@ -229,27 +158,40 @@
     </div>
 
     <script>
-        const qualitySlider = document.getElementById("quality");
-        const qualityValue = document.getElementById("quality-value");
-        const sliderFill = document.querySelector(".slider-fill");
-        const sliderThumb = document.querySelector(".slider-thumb");
+        const uploadInput = document.getElementById("upload");
+        const fileSizeDisplay = document.getElementById("file-size");
+        const qualityInput = document.getElementById("quality");
         const statusText = document.getElementById("status");
+        const downloadButton = document.getElementById("download");
 
-        qualitySlider.addEventListener("input", function () {
-            let value = this.value;
-            qualityValue.innerText = value + "%";
-            sliderFill.style.width = value + "%";
-            sliderThumb.style.left = value + "%";
+        uploadInput.addEventListener("change", function () {
+            if (uploadInput.files.length > 0) {
+                let file = uploadInput.files[0];
+                let fileSizeBytes = file.size;
+                let fileSizeMB = (fileSizeBytes / (1024 * 1024)).toFixed(2);
+
+                if (fileSizeBytes > 50000000) {
+                    fileSizeDisplay.innerHTML = `<span style="color: red;">⚠️ File size too large! Max limit: 50MB</span>`;
+                    uploadInput.value = "";
+                } else {
+                    fileSizeDisplay.innerText = `Original Size: ${fileSizeMB} MB`;
+                }
+            }
         });
 
         document.getElementById("compress").addEventListener("click", function () {
-            let fileInput = document.getElementById("upload").files[0];
+            let fileInput = uploadInput.files[0];
             if (!fileInput) {
                 alert("Please upload an image.");
                 return;
             }
 
-            let quality = qualitySlider.value / 100;
+            let maxSizeKB = parseInt(qualityInput.value);
+            if (maxSizeKB < 0 || maxSizeKB > 50000) {
+                statusText.innerHTML = `<span style="color: red;">⚠️ Enter size between 0KB - 50MB</span>`;
+                return;
+            }
+
             let format = document.getElementById("format").value;
             let reader = new FileReader();
 
@@ -266,9 +208,14 @@
                     canvas.height = img.height;
                     ctx.drawImage(img, 0, 0, img.width, img.height);
 
+                    let quality = maxSizeKB * 1024 / fileInput.size;
                     let compressedData = canvas.toDataURL(`image/${format}`, quality);
-                    document.getElementById("download").dataset.url = compressedData;
-                    document.getElementById("download").disabled = false;
+
+                    let anchor = document.createElement("a");
+                    anchor.href = compressedData;
+                    anchor.download = `compressed.${format}`;
+                    downloadButton.onclick = () => anchor.click();
+                    downloadButton.disabled = false;
 
                     statusText.innerText = "";
                 };
