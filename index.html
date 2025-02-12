@@ -21,8 +21,9 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            width: 100vw;
             background: #222;
-            width: 100%;
+            padding: 20px;
         }
 
         /* Main Container */
@@ -30,15 +31,15 @@
             background: #333;
             padding: 25px;
             width: 90%;
-            max-width: 400px;
+            max-width: 450px;
             border-radius: 10px;
-            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
             text-align: center;
             color: white;
         }
 
         h1 {
-            font-size: 24px;
+            font-size: 22px;
             color: white;
             margin-bottom: 15px;
         }
@@ -77,7 +78,6 @@
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
-            border: none;
         }
 
         button:hover {
@@ -94,7 +94,7 @@
             color: white;
         }
 
-        /* SLIDER WITH MOVABLE GREEN DOT */
+        /* Slider UI */
         .slider-container {
             display: flex;
             align-items: center;
@@ -132,8 +132,8 @@
             opacity: 0;
         }
 
-        /* MOVABLE GREEN DOT */
-        .slider-dot {
+        /* Movable Green Dot */
+        .slider-thumb {
             position: absolute;
             width: 16px;
             height: 16px;
@@ -142,7 +142,8 @@
             top: -5px;
             left: 50%;
             transform: translateX(-50%);
-            transition: left 0.1s linear;
+            transition: left 0.1s;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
 
         /* Preview Section */
@@ -155,6 +156,39 @@
             border-radius: 5px;
             border: 1px solid #555;
             margin-top: 10px;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+            color: yellow;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                max-width: 400px;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 100%;
+                max-width: 350px;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 18px;
+            }
+            button {
+                padding: 10px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -170,7 +204,7 @@
         <div class="slider-container">
             <div class="slider-wrapper">
                 <div class="slider-fill"></div>
-                <div class="slider-dot"></div>
+                <div class="slider-thumb"></div>
                 <input type="range" id="quality" min="0" max="100" value="50">
             </div>
             <span id="quality-value">50%</span>
@@ -184,6 +218,7 @@
         </select>
 
         <button id="compress">Compress Image</button>
+        <div id="status"></div>
 
         <div id="preview">
             <h3>Preview:</h3>
@@ -197,15 +232,14 @@
         const qualitySlider = document.getElementById("quality");
         const qualityValue = document.getElementById("quality-value");
         const sliderFill = document.querySelector(".slider-fill");
-        const sliderDot = document.querySelector(".slider-dot");
+        const sliderThumb = document.querySelector(".slider-thumb");
+        const statusText = document.getElementById("status");
 
         qualitySlider.addEventListener("input", function () {
             let value = this.value;
             qualityValue.innerText = value + "%";
-            
-            // Move slider fill and dot
             sliderFill.style.width = value + "%";
-            sliderDot.style.left = value + "%";
+            sliderThumb.style.left = value + "%";
         });
 
         document.getElementById("compress").addEventListener("click", function () {
@@ -218,6 +252,8 @@
             let quality = qualitySlider.value / 100;
             let format = document.getElementById("format").value;
             let reader = new FileReader();
+
+            statusText.innerText = "Image Compress⏳";
 
             reader.onload = function (event) {
                 let img = new Image();
@@ -233,22 +269,12 @@
                     let compressedData = canvas.toDataURL(`image/${format}`, quality);
                     document.getElementById("download").dataset.url = compressedData;
                     document.getElementById("download").disabled = false;
+
+                    statusText.innerText = "";
                 };
             };
 
             reader.readAsDataURL(fileInput);
-        });
-
-        document.getElementById("download").addEventListener("click", function () {
-            let url = this.dataset.url;
-            let format = document.getElementById("format").value;
-            let link = document.createElement("a");
-
-            link.href = url;
-            link.download = "compressed-image." + format;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         });
     </script>
 
