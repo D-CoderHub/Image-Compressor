@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor</title>
+    <style>
+        /* Google Font */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Full Page Background */
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #222;
+            width: 100%;
+        }
+
+        /* Main Container */
+        .container {
+            background: #333;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            color: white;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            display: block;
+            margin-top: 10px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: none;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input, select {
+            background: #444;
+            color: white;
+            border: 1px solid #666;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        /* Green Button */
+        button {
+            background: #27ae60;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+        }
+
+        button:hover {
+            background: #2ecc71;
+        }
+
+        button:disabled {
+            background: #777;
+            cursor: not-allowed;
+        }
+
+        #quality-value {
+            font-weight: bold;
+            color: white;
+        }
+
+        /* SLIDER WITH MOVABLE GREEN DOT */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            position: relative;
+        }
+
+        .slider-wrapper {
+            position: relative;
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 5px;
+        }
+
+        .slider-fill {
+            position: absolute;
+            height: 6px;
+            background: #27ae60;
+            border-radius: 5px;
+            width: 50%;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: transparent;
+            outline: none;
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+        }
+
+        /* MOVABLE GREEN DOT */
+        .slider-dot {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #27ae60;
+            border-radius: 50%;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.1s linear;
+        }
+
+        /* Preview Section */
+        #preview {
+            margin-top: 15px;
+        }
+
+        canvas {
+            max-width: 100%;
+            border-radius: 5px;
+            border: 1px solid #555;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Image Compressor</h1>
+
+        <label for="upload">Upload Image:</label>
+        <input type="file" id="upload" accept="image/*">
+        
+        <label for="quality">Quality (0-100):</label>
+        <div class="slider-container">
+            <div class="slider-wrapper">
+                <div class="slider-fill"></div>
+                <div class="slider-dot"></div>
+                <input type="range" id="quality" min="0" max="100" value="50">
+            </div>
+            <span id="quality-value">50%</span>
+        </div>
+
+        <label for="format">Output Format:</label>
+        <select id="format">
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+            <option value="webp">WEBP</option>
+        </select>
+
+        <button id="compress">Compress Image</button>
+
+        <div id="preview">
+            <h3>Preview:</h3>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <button id="download" disabled>Download</button>
+    </div>
+
+    <script>
+        const qualitySlider = document.getElementById("quality");
+        const qualityValue = document.getElementById("quality-value");
+        const sliderFill = document.querySelector(".slider-fill");
+        const sliderDot = document.querySelector(".slider-dot");
+
+        qualitySlider.addEventListener("input", function () {
+            let value = this.value;
+            qualityValue.innerText = value + "%";
+            
+            // Move slider fill and dot
+            sliderFill.style.width = value + "%";
+            sliderDot.style.left = value + "%";
+        });
+
+        document.getElementById("compress").addEventListener("click", function () {
+            let fileInput = document.getElementById("upload").files[0];
+            if (!fileInput) {
+                alert("Please upload an image.");
+                return;
+            }
+
+            let quality = qualitySlider.value / 100;
+            let format = document.getElementById("format").value;
+            let reader = new FileReader();
+
+            reader.onload = function (event) {
+                let img = new Image();
+                img.src = event.target.result;
+                img.onload = function () {
+                    let canvas = document.getElementById("canvas");
+                    let ctx = canvas.getContext("2d");
+
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                    let compressedData = canvas.toDataURL(`image/${format}`, quality);
+                    document.getElementById("download").dataset.url = compressedData;
+                    document.getElementById("download").disabled = false;
+                };
+            };
+
+            reader.readAsDataURL(fileInput);
+        });
+
+        document.getElementById("download").addEventListener("click", function () {
+            let url = this.dataset.url;
+            let format = document.getElementById("format").value;
+            let link = document.createElement("a");
+
+            link.href = url;
+            link.download = "compressed-image." + format;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+
+</body>
+</html>
